@@ -6,6 +6,13 @@ const createRecipesModel = async (recipe) => {
   return { id: insertedId };
 };
 
+const getAllRecipesModel = async () => {
+  const conn = await connection();
+  const allRecipes = await conn.collection('recipes').find({}).toArray();
+  return allRecipes;
+};
+
 module.exports = {
   createRecipesModel,
+  getAllRecipesModel,
 };

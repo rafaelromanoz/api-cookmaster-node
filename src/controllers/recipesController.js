@@ -1,3 +1,4 @@
+const { getAllRecipesModel } = require('../models/recipeModel');
 const { createRecipesService } = require('../services/recipesService');
 
 const createRecipeController = async (req, res, next) => {
@@ -11,6 +12,17 @@ const createRecipeController = async (req, res, next) => {
   }
 };
 
+const getAllRecipesController = async (_req, res, next) => {
+  try {
+    const allRecipes = await getAllRecipesModel();
+    return res.status(200).json(allRecipes); 
+  } catch (error) {
+    console.error(error.message);
+    next(error);
+  }
+};
+
 module.exports = {
   createRecipeController,
+  getAllRecipesController,
 };
