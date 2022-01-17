@@ -1,4 +1,5 @@
-const { createRecipesModel } = require('../models/recipeModel');
+const { ObjectId } = require('mongodb');
+const { createRecipesModel, getRecipeByIdModel } = require('../models/recipeModel');
 const { recipeSchema } = require('../schemas/schemas');
 const { createErrorMessage } = require('../utils/functions');
 
@@ -19,6 +20,14 @@ const createRecipesService = async (recipe, idUser) => {
   };
 };
 
+const getRecipeByIdService = async (id) => {
+  if (!ObjectId.isValid(id)) throw createErrorMessage(404, 'recipe not found');
+  const recipe = await getRecipeByIdModel(id);
+  if (!recipe) throw createErrorMessage(404, 'recipe not found');
+  return recipe;
+};
+
 module.exports = {
   createRecipesService,
+  getRecipeByIdService,
 };
