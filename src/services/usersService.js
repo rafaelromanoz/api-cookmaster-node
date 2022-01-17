@@ -35,7 +35,21 @@ const loginService = async (body) => {
   return { token };
 };
 
+const createAdminService = async (role, user) => {
+  const { error } = bodySchema.validate(user);
+  if (error) throw createErrorMessage(400, error.message);
+  const { id } = await createUserModel(user);
+  return {
+    user: {
+      ...user,
+      role,
+      _id: id,
+    },
+  };
+};
+
 module.exports = {
   createUserService,
   loginService,
+  createAdminService,
 };
