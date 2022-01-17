@@ -1,4 +1,4 @@
-const { getAllRecipesModel } = require('../models/recipeModel');
+const { getAllRecipesModel, deleteRecipeModel } = require('../models/recipeModel');
 const { createRecipesService, 
   getRecipeByIdService, updateRecipeService } = require('../services/recipesService');
 
@@ -46,9 +46,21 @@ const updateRecipeController = async (req, res, next) => {
   }
 };
 
+const deleteRecipeController = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    await deleteRecipeModel(id);
+    return res.status(204).send();
+  } catch (error) {
+    console.error(error.message);
+    next(error);
+  }
+};
+
 module.exports = {
   createRecipeController,
   getAllRecipesController,
   getRecipeByIdController,
   updateRecipeController,
+  deleteRecipeController,
 };
