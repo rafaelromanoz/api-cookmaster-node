@@ -40,8 +40,17 @@ const updateRecipeService = async (id, reqBody, userId) => {
   };
 };
 
+const insertImageRecipeService = async (id, image) => {
+  const recipe = await getRecipeByIdModel(id);
+  return {
+    ...recipe,
+    image: `localhost:3000/src/uploads/${image}`,
+  };
+};
+
 module.exports = {
   createRecipesService,
   getRecipeByIdService,
   updateRecipeService,
+  insertImageRecipeService,
 };
