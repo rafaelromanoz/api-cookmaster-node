@@ -1,5 +1,7 @@
 const { ObjectId } = require('mongodb');
-const { createRecipesModel, getRecipeByIdModel } = require('../models/recipeModel');
+const { createRecipesModel, 
+  getRecipeByIdModel, 
+  updateRecipeModel } = require('../models/recipeModel');
 const { recipeSchema } = require('../schemas/schemas');
 const { createErrorMessage } = require('../utils/functions');
 
@@ -27,7 +29,19 @@ const getRecipeByIdService = async (id) => {
   return recipe;
 };
 
+const updateRecipeService = async (id, reqBody, userId) => {
+  const { error } = recipeSchema.validate(reqBody);
+  if (error) throw createErrorMessage(400, error.message);
+  await updateRecipeModel(id, reqBody);
+  return {
+    _id: id,
+    ...reqBody,
+    userId,
+  };
+};
+
 module.exports = {
   createRecipesService,
   getRecipeByIdService,
+  updateRecipeService,
 };
