@@ -1,4 +1,4 @@
-const { createUserService } = require('../services/usersService');
+const { createUserService, loginService } = require('../services/usersService');
 
 const createUserController = async (req, res, next) => {
   try {
@@ -9,6 +9,18 @@ const createUserController = async (req, res, next) => {
     next(error);
   }
 };
+
+const loginController = async (req, res, next) => {
+  try {
+    const token = await loginService(req.body);
+    return res.status(200).json(token);
+  } catch (error) {
+    console.error(error.message);
+    next(error);
+  }
+};
+
 module.exports = {
   createUserController, 
+  loginController,
 };

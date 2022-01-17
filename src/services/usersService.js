@@ -1,5 +1,6 @@
+const { generateToken } = require('../auth/authConfig');
 const { findUserByEmailModel, createUserModel } = require('../models/userModel');
-const { bodySchema } = require('../schemas/schemas');
+const { bodySchema, loginSchema } = require('../schemas/schemas');
 const { createErrorMessage } = require('../utils/functions');
 
 const createUserService = async (body) => {
@@ -22,6 +23,19 @@ const createUserService = async (body) => {
   };
 };
 
+const loginService = async (body) => {
+  const { error } = loginSchema.validate(body);
+  if (error) throw createErrorMessage(401, error.message);
+  const user = await findUserByEmailModel(body.email);
+  if (!user || user.password !== body.password) {
+    throw createErrorMessage(401, 'Incorrect username or password');
+  }
+  const { password, email, ...dataWithoutPassword } = user;
+  const token = generateToken(dataWithoutPassword);
+  return { token };
+};
+
 module.exports = {
   createUserService,
+  loginService,
 };
