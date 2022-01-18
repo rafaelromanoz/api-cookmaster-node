@@ -1,6 +1,8 @@
 const chai = require('chai');
 const sinon = require('sinon');
-
+const path = require('path');
+const fs = require('fs');
+const directory = path.resolve(__dirname, '..', 'uploads');
 const chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 
@@ -8,6 +10,7 @@ const { expect } = chai;
 const { getConnection } = require('./connectionMockMongo');
 const { MongoClient } = require('mongodb');
 const server = require('../api/app');
+const { response } = require('../api/app');
 
 describe('POST /users', () => {
   let connectionMock;
@@ -254,6 +257,427 @@ describe('POST /recipes', () => {
     });
     it('Se possui a propriedade _id', () => {
       expect(response.body.recipe).to.have.a.property('_id');
+    });
+  });
+});
+
+describe('GET /recipes', () => {
+  let connectionMock;
+  before(async () => {
+    connectionMock = await getConnection();
+    sinon.stub(MongoClient, 'connect').resolves(connectionMock);
+  });
+
+  after(async () => {
+    MongoClient.connect.restore();
+  });
+  describe('Se retorna todas recipes', () => {
+    let response;
+    before(async () => {
+      const usersCollection = connectionMock
+        .db('Cookmaster')
+        .collection('users');
+      await usersCollection.insertOne({
+        name: 'Rafael',
+        email: 'rafa-kun@hotmail.com',
+        password: '123',
+      });
+
+      response = await chai.request(server).get('/recipes');
+    });
+    it('Se retorna um array ', () => {
+      expect(response.body).to.be.an('array');
+    });
+    it('Se retorna o status correto', () => {
+      expect(response).to.have.status(200);
+    });
+  });
+});
+
+describe('GET /recipes:id', () => {
+  let connectionMock;
+  before(async () => {
+    connectionMock = await getConnection();
+    sinon.stub(MongoClient, 'connect').resolves(connectionMock);
+  });
+
+  after(async () => {
+    MongoClient.connect.restore();
+  });
+
+  describe('Se retorna todas recipes', () => {
+    let response;
+    before(async () => {
+      const usersCollection = connectionMock
+        .db('Cookmaster')
+        .collection('users');
+      await usersCollection.insertOne({
+        name: 'Rafael',
+        email: 'rafa-kun@hotmail.com',
+        password: '123',
+      });
+
+      const token = await chai
+        .request(server)
+        .post('/login')
+        .send({
+          email: 'rafa-kun@hotmail.com',
+          password: '123',
+        })
+        .then((res) => res.body);
+
+      const { insertedId } = await connectionMock
+        .db('Cookmaster')
+        .collection('recipes')
+        .insertOne({
+          name: 'Feijoada',
+          ingredients: 'feijão',
+          preparation: 'mistura tudo e deixa ferver e é isso',
+        });
+
+      response = await chai.request(server).get(`/recipes/${insertedId}`);
+    });
+    it('Se retorna um array ', () => {
+      expect(response.body).to.be.an('object');
+    });
+    it('Se retorna o status correto', () => {
+      expect(response).to.have.status(200);
+    });
+    it('Se tiver a propriedade correta _id', () => {
+      expect(response.body).to.have.a.property('_id');
+    });
+  });
+  describe('Se não encontra a receita', () => {
+    let response;
+    before(async () => {
+      const usersCollection = connectionMock
+        .db('Cookmaster')
+        .collection('users');
+      await usersCollection.insertOne({
+        name: 'Rafael',
+        email: 'rafa-kun@hotmail.com',
+        password: '123',
+      });
+
+      const token = await chai
+        .request(server)
+        .post('/login')
+        .send({
+          email: 'rafa-kun@hotmail.com',
+          password: '123',
+        })
+        .then((res) => res.body);
+
+      const { insertedId } = await connectionMock
+        .db('Cookmaster')
+        .collection('recipes')
+        .insertOne({
+          name: 'Feijoada',
+          ingredients: 'feijão',
+          preparation: 'mistura tudo e deixa ferver e é isso',
+        });
+
+      response = await chai.request(server).get(`/recipes/${insertedId}o`);
+    });
+    it('Se o status é certo', () => {
+      expect(response).to.have.status(404);
+    });
+  });
+});
+
+describe('PUT /recipes/:id', () => {
+  let connectionMock;
+  before(async () => {
+    connectionMock = await getConnection();
+    sinon.stub(MongoClient, 'connect').resolves(connectionMock);
+  });
+
+  after(async () => {
+    MongoClient.connect.restore();
+  });
+  describe('Quando realiza o update com sucesso', () => {
+    let response;
+    before(async () => {
+      const usersCollection = connectionMock
+        .db('Cookmaster')
+        .collection('users');
+      await usersCollection.insertOne({
+        name: 'Rafael',
+        email: 'rafa-kun@hotmail.com',
+        password: '123',
+      });
+
+      const token = await chai
+        .request(server)
+        .post('/login')
+        .send({
+          email: 'rafa-kun@hotmail.com',
+          password: '123',
+        })
+        .then((res) => res.body);
+
+      const { insertedId } = await connectionMock
+        .db('Cookmaster')
+        .collection('recipes')
+        .insertOne({
+          name: 'Feijoada',
+          ingredients: 'feijão',
+          preparation: 'mistura tudo e deixa ferver e é isso',
+        });
+
+      response = await chai
+        .request(server)
+        .put(`/recipes/${insertedId}`)
+        .set('authorization', token.token)
+        .send({
+          name: 'Comida braba',
+          ingredients: 'batata frita, bife, salada de tomate',
+          preparation: 'ta pronto',
+        });
+    });
+    it('Se retorna o status certo', () => {
+      expect(response).to.have.status(200);
+    });
+  });
+  describe('Se não foi passado o id correto', () => {
+    let response;
+    before(async () => {
+      const usersCollection = connectionMock
+        .db('Cookmaster')
+        .collection('users');
+      await usersCollection.insertOne({
+        name: 'Rafael',
+        email: 'rafa-kun@hotmail.com',
+        password: '123',
+      });
+
+      const token = await chai
+        .request(server)
+        .post('/login')
+        .send({
+          email: 'rafa-kun@hotmail.com',
+          password: '123',
+        })
+        .then((res) => res.body);
+
+      const { insertedId } = await connectionMock
+        .db('Cookmaster')
+        .collection('recipes')
+        .insertOne({
+          name: 'Feijoada',
+          ingredients: 'feijão',
+          preparation: 'mistura tudo e deixa ferver e é isso',
+        });
+      response = await chai
+        .request(server)
+        .put(`/recipes/${insertedId}i`)
+        .set('authorization', token.token)
+        .send({
+          name: 'Comida braba',
+          ingredients: 'batata frita, bife, salada de tomate',
+          preparation: 'ta pronto',
+        });
+    });
+    it('Se recebe o status correto', () => {
+      expect(response).to.have.status(400);
+    });
+    it('Se é um objeto', () => {
+      expect(response.body).to.be.an('object');
+    });
+    it('Se possui a mensagem correta', () => {
+      expect(response.body).to.have.a.property('message');
+    });
+    it('Se a mensagem possui a string correta', () => {
+      expect(response.body.message).to.be.equal('id is not valid');
+    });
+  });
+});
+
+describe('Delete /recipes/:id', () => {
+  let connectionMock;
+  before(async () => {
+    connectionMock = await getConnection();
+    sinon.stub(MongoClient, 'connect').resolves(connectionMock);
+  });
+
+  after(async () => {
+    MongoClient.connect.restore();
+  });
+  describe('Se é bem excluido', () => {
+    let response;
+    before(async () => {
+      const usersCollection = connectionMock
+        .db('Cookmaster')
+        .collection('users');
+      await usersCollection.insertOne({
+        name: 'Rafael',
+        email: 'rafa-kun@hotmail.com',
+        password: '123',
+      });
+
+      const token = await chai
+        .request(server)
+        .post('/login')
+        .send({
+          email: 'rafa-kun@hotmail.com',
+          password: '123',
+        })
+        .then((res) => res.body);
+
+      const { insertedId } = await connectionMock
+        .db('Cookmaster')
+        .collection('recipes')
+        .insertOne({
+          name: 'Feijoada',
+          ingredients: 'feijão',
+          preparation: 'mistura tudo e deixa ferver e é isso',
+        });
+      response = await chai
+        .request(server)
+        .delete(`/recipes/${insertedId}`)
+        .set('authorization', token.token);
+    });
+    it('Se o status retornado é certo', () => {
+      expect(response).to.have.status(204);
+    });
+    it('Se é retornado um objeto', () => {
+      expect(response.body).to.be.an('object');
+    });
+  });
+});
+
+describe('POST /users/admin', () => {
+  let connectionMock;
+  before(async () => {
+    connectionMock = await getConnection();
+    sinon.stub(MongoClient, 'connect').resolves(connectionMock);
+  });
+
+  after(async () => {
+    MongoClient.connect.restore();
+  });
+  describe('Se cria um usuário admin', () => {
+    let response;
+    before(async () => {
+      const usersCollection = connectionMock
+        .db('Cookmaster')
+        .collection('users');
+      await usersCollection.insertOne({
+        name: 'admin',
+        email: 'root@email.com',
+        password: 'admin',
+        role: 'admin',
+      });
+
+      const token = await chai
+        .request(server)
+        .post('/login')
+        .send({
+          email: 'root@email.com',
+          password: 'admin',
+        })
+        .then((res) => res.body);
+
+      response = await chai
+        .request(server)
+        .post('/users/admin')
+        .set('authorization', token.token)
+        .send({
+          name: 'Cloud Strife',
+          email: 'cloud@gmail.com',
+          password: '4577952665',
+        });
+    });
+    it('Se o status retornado é certo admin', () => {
+      expect(response).to.have.status(201);
+    });
+    // it('Se é retornado um objeto', () => {
+    //   expect(response.body).to.be.an('object');
+    // });
+  });
+});
+
+describe('Testando PUT /:id/image', () => {
+  let connectionMock;
+  before(async () => {
+    connectionMock = await getConnection();
+    sinon.stub(MongoClient, 'connect').resolves(connectionMock);
+  });
+
+  after(async () => {
+    MongoClient.connect.restore();
+  });
+  describe('Se vem a imagem certa', () => {
+    let response;
+    before(async() => {
+      const usersCollection = connectionMock
+        .db('Cookmaster')
+        .collection('users');
+      await usersCollection.insertOne({
+        name: 'admin',
+        email: 'root@email.com',
+        password: 'admin',
+        role: 'admin',
+      });
+
+      const token = await chai
+        .request(server)
+        .post('/login')
+        .send({
+          email: 'root@email.com',
+          password: 'admin',
+        })
+        .then((res) => res.body);
+
+        const { insertedId } = await connectionMock
+        .db('Cookmaster')
+        .collection('recipes')
+        .insertOne({
+          name: 'Feijoada',
+          ingredients: 'feijão',
+          preparation: 'mistura tudo e deixa ferver e é isso',
+        });
+      
+
+      response = await chai
+        .request(server)
+        .put(`/recipes/${insertedId}/image`)
+        .set('authorization', token.token)
+        .set('content-type', 'multipart/form-data')
+        .attach('image', fs.readFileSync(`${directory}/ratinho.jpg`), 'file');
+      console.log(response);
+    });
+    it('Se a resposta é um jpeg', () => {
+      expect(response.body).to.have.a.property('image');
+    });
+    it('Se o status é 200', () => {
+      expect(response).to.have.status(200);
+    });
+  });
+});
+
+describe('Testando GET /images/:id', () => {
+  let connectionMock;
+  before(async () => {
+    connectionMock = await getConnection();
+    sinon.stub(MongoClient, 'connect').resolves(connectionMock);
+  });
+
+  after(async () => {
+    MongoClient.connect.restore();
+  });
+  describe('Se vem a imagem certa', () => {
+    let response;
+    before(async() => {
+      response = await chai
+        .request(server)
+        .get('/images/ratinho.jpg')
+    });
+    it('Se a resposta é um jpeg', () => {
+      expect(response.type).to.be.equal('image/jpeg')
+    });
+    it('Se o status é 200', () => {
+      expect(response).to.have.status(200);
     });
   });
 });

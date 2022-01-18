@@ -30,6 +30,7 @@ const getRecipeByIdService = async (id) => {
 };
 
 const updateRecipeService = async (id, reqBody, userId) => {
+  if (!ObjectId.isValid(id)) throw createErrorMessage(400, 'id is not valid');
   const { error } = recipeSchema.validate(reqBody);
   if (error) throw createErrorMessage(400, error.message);
   await updateRecipeModel(id, reqBody);
