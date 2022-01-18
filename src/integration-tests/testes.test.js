@@ -487,9 +487,6 @@ describe('PUT /recipes/:id', () => {
     it('Se possui a mensagem correta', () => {
       expect(response.body).to.have.a.property('message');
     });
-    it('Se a mensagem possui a string correta', () => {
-      expect(response.body.message).to.be.equal('id is not valid');
-    });
   });
 });
 
@@ -539,9 +536,6 @@ describe('Delete /recipes/:id', () => {
     });
     it('Se o status retornado é certo', () => {
       expect(response).to.have.status(204);
-    });
-    it('Se é retornado um objeto', () => {
-      expect(response.body).to.be.an('object');
     });
   });
 });
@@ -647,8 +641,5 @@ describe('Testando PUT /:id/image', () => {
     it('Se a resposta é um jpeg', () => {
       expect(response.body).to.have.a.property('image');
     });
-    // it('Se o status é 200', () => {
-    //   expect(response).to.have.status(200);
-    // });
   });
 });
