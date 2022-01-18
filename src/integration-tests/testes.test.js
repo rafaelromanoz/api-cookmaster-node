@@ -591,9 +591,6 @@ describe('POST /users/admin', () => {
     it('Se o status retornado é certo admin', () => {
       expect(response).to.have.status(201);
     });
-    // it('Se é retornado um objeto', () => {
-    //   expect(response.body).to.be.an('object');
-    // });
   });
 });
 
@@ -649,32 +646,6 @@ describe('Testando PUT /:id/image', () => {
     });
     it('Se a resposta é um jpeg', () => {
       expect(response.body).to.have.a.property('image');
-    });
-    it('Se o status é 200', () => {
-      expect(response).to.have.status(200);
-    });
-  });
-});
-
-describe('Testando GET /images/:id', () => {
-  let connectionMock;
-  before(async () => {
-    connectionMock = await getConnection();
-    sinon.stub(MongoClient, 'connect').resolves(connectionMock);
-  });
-
-  after(async () => {
-    MongoClient.connect.restore();
-  });
-  describe('Se vem a imagem certa', () => {
-    let response;
-    before(async() => {
-      response = await chai
-        .request(server)
-        .get('/images/ratinho.jpg')
-    });
-    it('Se a resposta é um jpeg', () => {
-      expect(response.type).to.be.equal('image/jpeg')
     });
     it('Se o status é 200', () => {
       expect(response).to.have.status(200);
