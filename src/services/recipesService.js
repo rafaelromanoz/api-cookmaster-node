@@ -1,4 +1,4 @@
-const { ObjectId } = require('mongodb');
+const { ObjectID } = require('mongodb');
 const { createRecipesModel, 
   getRecipeByIdModel, 
   updateRecipeModel } = require('../models/recipeModel');
@@ -23,21 +23,28 @@ const createRecipesService = async (recipe, idUser) => {
 };
 
 const getRecipeByIdService = async (id) => {
-  if (!ObjectId.isValid(id)) throw createErrorMessage(404, 'recipe not found');
+  if (!ObjectID.isValid(id)) throw createErrorMessage(404, 'recipe not found');
   const recipe = await getRecipeByIdModel(id);
   if (!recipe) throw createErrorMessage(404, 'recipe not found');
   return recipe;
 };
 
-const updateRecipeService = async (id, reqBody, userId) => {
-  if (!ObjectId.isValid(id)) throw createErrorMessage(400, 'id is not valid');
+const updateRecipeService = async (id, reqBody, userIdToken, role) => {
+  if (!ObjectID.isValid(id)) throw createErrorMessage(400, 'id is not valid');
   const { error } = recipeSchema.validate(reqBody);
   if (error) throw createErrorMessage(400, error.message);
+  const { userId } = await getRecipeByIdModel(id);
+  const objIdFromToken = ObjectID(userIdToken);
+  const objIdFromBd = ObjectID(userId);
+  if (!objIdFromToken.equals(objIdFromBd) && role === 'user') {
+    throw createErrorMessage(401, 'você precisa ser dono da receita ou precisa ser admin');
+ }
+ 
   await updateRecipeModel(id, reqBody);
   return {
     _id: id,
     ...reqBody,
-    userId,
+    userId: userIdToken,
   };
 };
 

@@ -38,8 +38,8 @@ const getRecipeByIdController = async (req, res, next) => {
 const updateRecipeController = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { _id } = req.user;
-    const recipeUpdated = await updateRecipeService(id, req.body, _id);
+    const { _id, role } = req.user;
+    const recipeUpdated = await updateRecipeService(id, req.body, _id, role);
     return res.status(200).json(recipeUpdated);
   } catch (error) {
     console.error(error.message);
